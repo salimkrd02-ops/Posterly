@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  button,
+  a[class*='rounded'] {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  button {
+    display: inline-flex;
+  }
+
+  button svg,
+  a[class*='rounded'] svg {
+    flex-shrink: 0;
+  }
+
+  button[class~='h-9'],
+  a[class~='h-9'] {
+    height: auto;
+    min-height: 2.25rem;
+  }
+
+  button[class~='h-10'],
+  a[class~='h-10'] {
+    height: auto;
+    min-height: 2.5rem;
+  }
+
+  button[class~='h-14'],
+  a[class~='h-14'] {
+    height: auto;
+    min-height: 3.5rem;
+  }
+
+  button[class*='gap-'],
+  a[class*='gap-'] {
+    column-gap: 0.5rem;
+    row-gap: 0.25rem;
+  }
+}
+
+@layer utilities {
+  button[class*='bg-[#2e7d32]']:not([class*='border']),
+  a[class*='bg-[#2e7d32]']:not([class*='border']) {
+    background-color: #4338ff;
+    box-shadow: 0 1px 2px rgb(67 56 255 / 0.18);
+  }
+
+  button[class*='hover:bg-[#236528]']:hover,
+  a[class*='hover:bg-[#236528]']:hover {
+    background-color: #372ee6;
+  }
+}
+
+* {
+  @apply box-border;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* Canvas styles */
+.canvas-container {
+  @apply border border-gray-300 bg-white rounded-lg shadow-sm;
+}
+
+.canvas-element {
+  @apply cursor-move;
+}
+
+.canvas-element.selected {
+  @apply outline outline-2 outline-blue-500;
+}
+
+/* Editor toolbar */
+.editor-toolbar {
+  @apply bg-white border-b border-gray-200 sticky top-0 z-10;
+}
+
+/* Loading states */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Form styles */
+@layer components {
+  .form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+}
