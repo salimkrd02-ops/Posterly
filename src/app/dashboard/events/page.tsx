@@ -74,10 +74,10 @@ export default function EventsPage() {
             <p className="mt-3 text-xl text-slate-600">
               View, create, edit, and delete your events
             </p>
-            <div className="mt-1 flex gap-2">
+            <div className="mt-1 flex flex-col gap-2 sm:flex-row">
               <input
                 placeholder="Search events..."
-                className="h-10 w-[365px] rounded-md border border-slate-300 bg-white px-4 text-sm outline-none focus:border-[#352bff] focus:ring-2 focus:ring-[#352bff]/15"
+                className="h-10 w-full rounded-md border border-slate-300 bg-white px-4 text-sm outline-none focus:border-[#352bff] focus:ring-2 focus:ring-[#352bff]/15 sm:w-[365px]"
               />
               <button className="h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium">
                 All ({events.length})

@@ -35,18 +35,6 @@ const ACTIVE_EVENT_ID_KEY = 'posterly:activeEventId';
 const TEAMS_KEY = 'posterly:teams';
 const CATEGORIES_KEY = 'posterly:categories';
 
-export const defaultEvent: EventRecord = {
-  id: 'event-ssf-cherikallu',
-  workspaceId: 'default-workspace',
-  name: 'SSF CHERIKALLU UNIT SAHITYOLSAV',
-  organizer: 'Cherikallu Unit',
-  date: 'May 22',
-  location: 'Nambram',
-  logoUrl: null,
-  logoName: 'event_logo_faklot4005.txt',
-  created: '5/22/2026',
-};
-
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
 
@@ -69,22 +57,16 @@ function notifyDataChanged() {
 export function getEvents() {
   const workspaceId = getActiveWorkspaceId() ?? 'default-workspace';
   const events = readJson<EventRecord[]>(EVENTS_KEY, []);
-  if (events.length === 0) {
-    const seededEvent = { ...defaultEvent, workspaceId };
-    writeJson(EVENTS_KEY, [seededEvent]);
-    return [seededEvent];
-  }
+  if (events.length === 0) return [];
 
-  return events
-    .map((event) => ({ ...event, workspaceId: event.workspaceId ?? workspaceId }))
-    .filter((event) => event.workspaceId === workspaceId);
+  return events.filter((event) => event.workspaceId === workspaceId);
 }
 
 export function saveEvents(events: EventRecord[]) {
   const workspaceId = getActiveWorkspaceId() ?? 'default-workspace';
   const allEvents = readJson<EventRecord[]>(EVENTS_KEY, []);
   const otherWorkspaceEvents = allEvents.filter(
-    (event) => (event.workspaceId ?? workspaceId) !== workspaceId,
+    (event) => event.workspaceId !== workspaceId,
   );
   writeJson(
     EVENTS_KEY,
@@ -117,16 +99,16 @@ export function getActiveEvent() {
 
 export function getTeams() {
   const workspaceId = getActiveWorkspaceId() ?? 'default-workspace';
-  return readJson<TeamRecord[]>(TEAMS_KEY, [])
-    .map((team) => ({ ...team, workspaceId: team.workspaceId ?? workspaceId }))
-    .filter((team) => team.workspaceId === workspaceId);
+  return readJson<TeamRecord[]>(TEAMS_KEY, []).filter(
+    (team) => team.workspaceId === workspaceId,
+  );
 }
 
 export function saveTeams(teams: TeamRecord[]) {
   const workspaceId = getActiveWorkspaceId() ?? 'default-workspace';
   const allTeams = readJson<TeamRecord[]>(TEAMS_KEY, []);
   const otherWorkspaceTeams = allTeams.filter(
-    (team) => (team.workspaceId ?? workspaceId) !== workspaceId,
+    (team) => team.workspaceId !== workspaceId,
   );
   writeJson(TEAMS_KEY, [
     ...otherWorkspaceTeams,
@@ -140,19 +122,16 @@ export function saveTeams(teams: TeamRecord[]) {
 
 export function getCategories() {
   const workspaceId = getActiveWorkspaceId() ?? 'default-workspace';
-  return readJson<CategoryRecord[]>(CATEGORIES_KEY, [])
-    .map((category) => ({
-      ...category,
-      workspaceId: category.workspaceId ?? workspaceId,
-    }))
-    .filter((category) => category.workspaceId === workspaceId);
+  return readJson<CategoryRecord[]>(CATEGORIES_KEY, []).filter(
+    (category) => category.workspaceId === workspaceId,
+  );
 }
 
 export function saveCategories(categories: CategoryRecord[]) {
   const workspaceId = getActiveWorkspaceId() ?? 'default-workspace';
   const allCategories = readJson<CategoryRecord[]>(CATEGORIES_KEY, []);
   const otherWorkspaceCategories = allCategories.filter(
-    (category) => (category.workspaceId ?? workspaceId) !== workspaceId,
+    (category) => category.workspaceId !== workspaceId,
   );
   writeJson(CATEGORIES_KEY, [
     ...otherWorkspaceCategories,

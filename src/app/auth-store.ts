@@ -44,6 +44,7 @@ const MEMBERS_KEY = 'posterly:workspaceMembers';
 const INVITATIONS_KEY = 'posterly:invitations';
 const SESSION_USER_ID_KEY = 'posterly:sessionUserId';
 const ACTIVE_WORKSPACE_ID_KEY = 'posterly:activeWorkspaceId';
+const ACTIVE_EVENT_ID_KEY = 'posterly:activeEventId';
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -95,6 +96,7 @@ export function getActiveWorkspaceId() {
 
 export function setActiveWorkspaceId(workspaceId: string) {
   window.localStorage.setItem(ACTIVE_WORKSPACE_ID_KEY, workspaceId);
+  window.localStorage.removeItem(ACTIVE_EVENT_ID_KEY);
   window.dispatchEvent(new Event('posterly:data-changed'));
 }
 
@@ -218,7 +220,7 @@ export function signIn(email: string, password: string) {
 export function signOut() {
   window.localStorage.removeItem(SESSION_USER_ID_KEY);
   window.localStorage.removeItem(ACTIVE_WORKSPACE_ID_KEY);
-  window.localStorage.removeItem('posterly:activeEventId');
+  window.localStorage.removeItem(ACTIVE_EVENT_ID_KEY);
   window.dispatchEvent(new Event('posterly:data-changed'));
 }
 

@@ -7,7 +7,7 @@ export default function CertificateResultsPage() {
   const { activeEvent, ready } = useActiveEvent();
 
   if (!ready) return null;
-  if (!activeEvent) return <DashboardShell active="CERTIFICATES:Results"><p>Please select an event first.</p></DashboardShell>;
+  if (!activeEvent) return <DashboardShell active="CERTIFICATES:Results"><p>Please create or select an event first.</p></DashboardShell>;
 
   return (
     <DashboardShell active="CERTIFICATES:Results">

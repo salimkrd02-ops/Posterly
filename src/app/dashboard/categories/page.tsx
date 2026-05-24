@@ -70,7 +70,7 @@ export default function CategoriesPage() {
   }
 
   if (!ready) return null;
-  if (!activeEvent) return <DashboardShell active="DATA:Categories"><p>Please select an event first.</p></DashboardShell>;
+  if (!activeEvent) return <DashboardShell active="DATA:Categories"><p>Please create or select an event first.</p></DashboardShell>;
 
   return (
     <DashboardShell active="DATA:Categories">

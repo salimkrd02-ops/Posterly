@@ -42,7 +42,7 @@ export default function TeamsPage() {
   }
 
   if (!ready) return null;
-  if (!activeEvent) return <DashboardShell active="DATA:Teams"><p>Please select an event first.</p></DashboardShell>;
+  if (!activeEvent) return <DashboardShell active="DATA:Teams"><p>Please create or select an event first.</p></DashboardShell>;
 
   return (
     <DashboardShell active="DATA:Teams">

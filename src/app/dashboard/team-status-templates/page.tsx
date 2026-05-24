@@ -8,7 +8,7 @@ export default function TeamStatusTemplatesPage() {
   const { activeEvent, ready } = useActiveEvent();
 
   if (!ready) return null;
-  if (!activeEvent) return <DashboardShell active="TEAM STATUS:Templates"><p>Please select an event first.</p></DashboardShell>;
+  if (!activeEvent) return <DashboardShell active="TEAM STATUS:Templates"><p>Please create or select an event first.</p></DashboardShell>;
 
   return (
     <DashboardShell active="TEAM STATUS:Templates">

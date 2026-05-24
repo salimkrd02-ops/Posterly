@@ -15,17 +15,18 @@ import { useActiveEvent } from './use-active-event';
 import { getCurrentUser } from '../auth-store';
 
 export default function DashboardPage() {
-  const { activeEvent, ready } = useActiveEvent();
+  const { activeEvent, ready } = useActiveEvent({ redirect: false });
 
   if (!ready) return null;
-  if (!activeEvent) return <DashboardShell><p>Please select an event first.</p></DashboardShell>;
 
   const currentUser = getCurrentUser();
   const displayName = currentUser?.name || currentUser?.email || 'user@gmail.com';
-  const eventTeams = getTeams().filter((team) => team.eventId === activeEvent.id);
-  const eventCategories = getCategories().filter(
-    (category) => category.eventId === activeEvent.id,
-  );
+  const eventTeams = activeEvent
+    ? getTeams().filter((team) => team.eventId === activeEvent.id)
+    : [];
+  const eventCategories = activeEvent
+    ? getCategories().filter((category) => category.eventId === activeEvent.id)
+    : [];
   const cards = [
     {
       icon: FileText,
@@ -91,11 +92,21 @@ export default function DashboardPage() {
         <header>
           <h1 className="text-2xl font-black">Welcome, {displayName}!</h1>
             <h2 className="mt-5 text-2xl font-black text-[#4338ff]">
-            Current Event: {activeEvent.name}
+            Current Event: {activeEvent?.name ?? 'No event selected'}
           </h2>
           <p className="mt-3 text-base text-slate-600">
-            Overview for the selected event.
+            {activeEvent
+              ? 'Overview for the selected event.'
+              : 'No events created yet. Create your first event to get started.'}
           </p>
+          {!activeEvent ? (
+            <Link
+              href="/dashboard/events"
+              className="mt-5 inline-flex min-h-10 items-center justify-center rounded-lg bg-[#4338ff] px-5 py-2 text-sm font-bold text-white shadow-sm shadow-indigo-200 hover:bg-[#372ee6]"
+            >
+              Create Event
+            </Link>
+          ) : null}
         </header>
 
         <section className="mt-9 grid gap-6 xl:grid-cols-3">

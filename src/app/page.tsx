@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Boxes,
   CheckCircle2,
+  Menu,
   DatabaseZap,
   Download,
   FileImage,
@@ -20,6 +21,7 @@ import {
   Star,
   Trophy,
   UserRound,
+  X,
 } from 'lucide-react';
 import type { ReactNode, SVGProps } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -97,6 +99,7 @@ const teamNames = ['Vadi Badr', 'Vadi Quba', 'Vadi Hasan'];
 export default function HomePage() {
   const router = useRouter();
   const [accountOpen, setAccountOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserRecord | null>(null);
   const [category, setCategory] = useState('Senior');
   const [winners, setWinners] = useState([
@@ -122,9 +125,24 @@ export default function HomePage() {
     setCurrentUser(getCurrentUser());
   }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  function handleLogout() {
+    signOut();
+    setCurrentUser(null);
+    setAccountOpen(false);
+    setMobileMenuOpen(false);
+    router.push('/');
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f8fb] text-[#050b22]">
-      <nav className="flex h-[92px] items-center justify-between border-b border-slate-200 bg-white/50 px-8 sm:px-16">
+      <nav className="hidden h-[92px] items-center justify-between border-b border-slate-200 bg-white/50 px-8 sm:px-16 md:flex">
         <Link href="/" className="flex items-center gap-3">
           <PosterlyLogo />
         </Link>
@@ -159,11 +177,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    setAccountOpen(false);
-                    signOut();
-                    setCurrentUser(null);
-                  }}
+                  onClick={handleLogout}
                   className="flex w-full items-center gap-4 border-t border-slate-200 px-5 py-4 text-left font-medium text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="h-5 w-5" />
@@ -187,21 +201,141 @@ export default function HomePage() {
         )}
       </nav>
 
-      <section className="mx-auto flex min-h-[860px] max-w-6xl flex-col items-center justify-center px-6 text-center">
-        <div className="mb-12 inline-flex items-center gap-3 rounded-md border border-[#3b32ff]/25 bg-white px-6 py-3 text-xl font-medium text-[#3b32ff] shadow-sm">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
+        <Link href="/" className="flex items-center gap-2">
+          <PosterlyLogo compact />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(true)}
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-[#05081f] hover:bg-[#f4f3ff]"
+          aria-label="Open menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      </header>
+
+      {mobileMenuOpen ? (
+        <button
+          type="button"
+          aria-label="Close menu overlay"
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm md:hidden"
+        />
+      ) : null}
+
+      <aside
+        className={`fixed inset-y-0 right-0 z-[60] flex w-[82vw] max-w-[340px] transform flex-col border-l border-slate-200 bg-white shadow-2xl transition-transform duration-200 md:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
+          <PosterlyLogo compact />
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-slate-100"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 px-4 py-6">
+          <nav className="space-y-2">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex min-h-11 items-center rounded-lg px-3 font-semibold text-[#05081f] hover:bg-[#f4f3ff]"
+            >
+              Home
+            </Link>
+            {currentUser ? (
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex min-h-11 items-center rounded-lg px-3 font-semibold text-[#05081f] hover:bg-[#f4f3ff]"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex min-h-11 items-center rounded-lg px-3 font-semibold text-[#05081f] hover:bg-[#f4f3ff]"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex min-h-11 items-center rounded-lg px-3 font-semibold text-[#05081f] hover:bg-[#f4f3ff]"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
+
+        <div className="border-t border-slate-200 p-4">
+          {currentUser ? (
+            <div className="space-y-3">
+              <p className="truncate text-sm font-medium text-slate-600">
+                {currentUser.email}
+              </p>
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[#4338ff] px-4 py-2 font-bold text-white shadow-sm shadow-indigo-200 hover:bg-[#372ee6]"
+              >
+                Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 font-bold text-[#05081f] hover:bg-slate-50"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 font-bold text-[#05081f] hover:bg-slate-50"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[#4338ff] px-4 py-2 font-bold text-white shadow-sm shadow-indigo-200 hover:bg-[#372ee6]"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <section className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col items-center justify-center px-5 py-16 text-center md:min-h-[860px] md:px-6">
+        <div className="mb-8 inline-flex items-center gap-3 rounded-md border border-[#3b32ff]/25 bg-white px-4 py-3 text-base font-medium text-[#3b32ff] shadow-sm md:mb-12 md:px-6 md:text-xl">
           <Star className="h-5 w-5 text-[#352bff]" />
           Organize Everything by Event!
         </div>
-        <h1 className="max-w-6xl text-6xl font-black leading-tight sm:text-8xl">
+        <h1 className="max-w-6xl text-4xl font-black leading-tight sm:text-6xl lg:text-8xl">
           Create Striking
           <span className="block bg-gradient-to-r from-[#4637ff] via-[#352bff] to-[#271dff] bg-clip-text text-transparent">
             Result Posters.
           </span>
-          <span className="block text-5xl sm:text-6xl">
+          <span className="block text-3xl sm:text-5xl lg:text-6xl">
             Effortlessly. Instantly. <em>Beautifully.</em>
           </span>
         </h1>
-        <p className="mt-10 max-w-4xl text-2xl leading-10 text-slate-600">
+        <p className="mt-8 max-w-4xl text-lg leading-8 text-slate-600 sm:text-2xl sm:leading-10">
           Posterly is your ultimate platform for crafting professional posters
           for program winners and team standings. Convert data into captivating
           visuals with our intuitive, event-driven workflow.
@@ -209,7 +343,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => router.push(currentUser ? '/dashboard' : '/login')}
-          className="mt-16 inline-flex items-center gap-4 rounded-lg bg-[#3b32ff] px-7 py-4 text-2xl font-bold text-white shadow-lg shadow-indigo-900/15 hover:bg-[#2920e8]"
+          className="mt-10 flex min-h-12 w-full max-w-sm items-center justify-center gap-3 rounded-lg bg-[#4338ff] px-6 py-3 text-lg font-bold text-white shadow-lg shadow-indigo-900/15 hover:bg-[#372ee6] sm:mt-16 sm:inline-flex sm:w-auto sm:max-w-none sm:px-7 sm:py-4 sm:text-2xl"
         >
           <Boxes className="h-6 w-6" />
           Go to Dashboard
@@ -328,15 +462,19 @@ function DemoHeader() {
   );
 }
 
-function PosterlyLogo() {
+function PosterlyLogo({ compact = false }: { compact?: boolean }) {
   return (
     <span className="flex items-center gap-3">
       <img
         src="/posterly_simple_logo_transparent.svg"
         alt=""
-        className="h-12 w-12"
+        className={compact ? 'h-9 w-9' : 'h-12 w-12'}
       />
-      <span className="flex items-baseline text-[34px] font-black tracking-[-0.02em] text-[#050b22]">
+      <span
+        className={`flex items-baseline font-black tracking-[-0.02em] text-[#050b22] ${
+          compact ? 'text-xl' : 'text-[34px]'
+        }`}
+      >
         Poster<span className="text-[#352bff]">ly</span>
       </span>
     </span>
