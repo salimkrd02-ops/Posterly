@@ -12,7 +12,6 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { DashboardShell } from '../components';
 import {
   EventRecord,
-  getActiveWorkspaceId,
   getActiveEventId,
   getEvents,
   makeCreatedDate,
@@ -20,6 +19,7 @@ import {
   saveEvents,
   setActiveEventId,
 } from '../event-store';
+import { getActiveWorkspaceId } from '../../auth-store';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<EventRecord[]>([]);
