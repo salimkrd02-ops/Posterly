@@ -49,6 +49,12 @@ export type InvitationRecord = {
 const USER_KEY = 'posterly_session_user';
 const WORKSPACE_KEY = 'posterly_active_workspace_id';
 const EVENT_KEY = 'posterly_active_event_id';
+const LEGACY_USER_KEYS = [
+  'posterly_current_user',
+  'postergen_current_user',
+  'posterly_user',
+  'user',
+];
 
 function isBrowser() {
   return typeof window !== 'undefined';
@@ -92,6 +98,7 @@ function requestSync<T>(path: string, options: { method?: string; body?: unknown
 
 function normalizeUser(user: UserRecord | null | undefined): UserRecord | null {
   if (!user?.id || !user.email) return null;
+  if (user.email === 'user@gmail.com') return null;
   return {
     id: user.id,
     name: user.name || user.email.split('@')[0] || 'User',
@@ -106,7 +113,14 @@ function setSession(user: UserRecord, workspace?: WorkspaceRecord | null) {
 }
 
 export function getCurrentUser(): UserRecord | null {
-  return normalizeUser(readJson<UserRecord>(USER_KEY));
+  const user = normalizeUser(readJson<UserRecord>(USER_KEY));
+  if (user) return user;
+  if (isBrowser()) {
+    for (const key of LEGACY_USER_KEYS) {
+      window.localStorage.removeItem(key);
+    }
+  }
+  return null;
 }
 
 export function getUsers(): UserRecord[] {
