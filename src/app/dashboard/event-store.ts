@@ -3,6 +3,7 @@
 import { getActiveWorkspaceId } from '../auth-store';
 
 export type EventRecord = {
+  [key: string]: unknown;
   id: string;
   workspace_id?: string;
   workspaceId?: string;
