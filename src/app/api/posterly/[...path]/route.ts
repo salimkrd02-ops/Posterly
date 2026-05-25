@@ -5,6 +5,26 @@ type RouteContext = {
   params: { path?: string[] };
 };
 
+type EventPayload = {
+  id?: string;
+  name?: string;
+  organizer?: string;
+  date?: string;
+  location?: string;
+  logo?: string | null;
+  created_by?: string;
+  createdBy?: string;
+  created_at?: string;
+  createdAt?: string;
+};
+
+type NamedPayload = {
+  id?: string;
+  name?: string;
+  created_at?: string;
+  createdAt?: string;
+};
+
 const now = () => new Date().toISOString();
 const id = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -338,8 +358,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   if (path === 'events/bulk') {
-    const events = Array.isArray(body.events) ? body.events : [];
-    const keepIds = events.map((event) => event.id).filter(Boolean);
+    const events: EventPayload[] = Array.isArray(body.events) ? body.events : [];
+    const keepIds = events.map((event: EventPayload) => event.id).filter(Boolean);
     const deleteClause = keepIds.length ? ` AND id NOT IN (${keepIds.map(sqlValue).join(', ')})` : '';
     await execute(`DELETE FROM events WHERE workspace_id = ${sqlValue(workspaceId)}${deleteClause}`);
     for (const event of events) {
@@ -372,8 +392,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   if (path === 'teams/bulk') {
     if (!eventId) return error('eventId is required');
-    const teams = Array.isArray(body.teams) ? body.teams : [];
-    const keepIds = teams.map((team) => team.id).filter(Boolean);
+    const teams: NamedPayload[] = Array.isArray(body.teams) ? body.teams : [];
+    const keepIds = teams.map((team: NamedPayload) => team.id).filter(Boolean);
     const deleteClause = keepIds.length ? ` AND id NOT IN (${keepIds.map(sqlValue).join(', ')})` : '';
     await execute(`DELETE FROM teams WHERE workspace_id = ${sqlValue(workspaceId)} AND event_id = ${sqlValue(eventId)}${deleteClause}`);
     for (const team of teams) {
@@ -389,8 +409,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   if (path === 'categories/bulk') {
     if (!eventId) return error('eventId is required');
-    const categories = Array.isArray(body.categories) ? body.categories : [];
-    const keepIds = categories.map((category) => category.id).filter(Boolean);
+    const categories: NamedPayload[] = Array.isArray(body.categories) ? body.categories : [];
+    const keepIds = categories.map((category: NamedPayload) => category.id).filter(Boolean);
     const deleteClause = keepIds.length ? ` AND id NOT IN (${keepIds.map(sqlValue).join(', ')})` : '';
     await execute(`DELETE FROM categories WHERE workspace_id = ${sqlValue(workspaceId)} AND event_id = ${sqlValue(eventId)}${deleteClause}`);
     for (const category of categories) {
