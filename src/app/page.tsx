@@ -342,11 +342,11 @@ export default function HomePage() {
         </p>
         <button
           type="button"
-          onClick={() => router.push(currentUser ? '/dashboard' : '/login')}
+          onClick={() => router.push(currentUser ? '/dashboard' : '/signup')}
           className="mt-10 flex min-h-12 w-full max-w-sm items-center justify-center gap-3 rounded-lg bg-[#4338ff] px-6 py-3 text-lg font-bold text-white shadow-lg shadow-indigo-900/15 hover:bg-[#372ee6] sm:mt-16 sm:inline-flex sm:w-auto sm:max-w-none sm:px-7 sm:py-4 sm:text-2xl"
         >
           <Boxes className="h-6 w-6" />
-          Go to Dashboard
+          {currentUser ? 'Go to Dashboard' : 'Get Started For Free'}
         </button>
       </section>
 

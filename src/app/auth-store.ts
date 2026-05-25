@@ -1,122 +1,174 @@
 'use client';
 
-export type UserRole = 'Owner' | 'Admin' | 'Editor' | 'Viewer';
-
 export type UserRecord = {
   id: string;
   name: string;
   email: string;
-  password: string;
-  createdAt: string;
+  created_at?: string;
+  createdAt?: string;
 };
 
 export type WorkspaceRecord = {
   id: string;
   name: string;
-  ownerId: string;
-  createdAt: string;
+  owner_id?: string;
+  ownerId?: string;
+  created_at?: string;
+  createdAt?: string;
 };
 
 export type WorkspaceMemberRecord = {
   id: string;
-  workspaceId: string;
-  userId: string;
-  role: UserRole;
-  status: 'active' | 'pending';
-  createdAt: string;
+  workspace_id?: string;
+  workspaceId?: string;
+  user_id?: string;
+  userId?: string;
+  role: 'Owner' | 'Admin' | 'Editor' | 'Viewer';
+  status: string;
+  created_at?: string;
+  createdAt?: string;
 };
 
 export type InvitationRecord = {
   id: string;
-  workspaceId: string;
-  invitedEmail: string;
-  invitedBy: string;
-  role: Exclude<UserRole, 'Owner'>;
-  status: 'pending' | 'accepted';
+  workspace_id?: string;
+  workspaceId?: string;
+  invited_email?: string;
+  invitedEmail?: string;
+  invited_by?: string;
+  invitedBy?: string;
+  role: 'Admin' | 'Editor' | 'Viewer';
+  status: string;
   token: string;
-  createdAt: string;
-  expiresAt: string;
+  created_at?: string;
+  createdAt?: string;
+  expires_at?: string;
+  expiresAt?: string;
 };
 
-const USERS_KEY = 'posterly:users';
-const WORKSPACES_KEY = 'posterly:workspaces';
-const MEMBERS_KEY = 'posterly:workspaceMembers';
-const INVITATIONS_KEY = 'posterly:invitations';
-const SESSION_USER_ID_KEY = 'posterly:sessionUserId';
-const ACTIVE_WORKSPACE_ID_KEY = 'posterly:activeWorkspaceId';
-const ACTIVE_EVENT_ID_KEY = 'posterly:activeEventId';
+const USER_KEY = 'posterly_session_user';
+const WORKSPACE_KEY = 'posterly_active_workspace_id';
+const EVENT_KEY = 'posterly_active_event_id';
 
-function readJson<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
+function readJson<T>(key: string): T | null {
+  if (!isBrowser()) return null;
   try {
     const value = window.localStorage.getItem(key);
-    return value ? (JSON.parse(value) as T) : fallback;
+    return value ? (JSON.parse(value) as T) : null;
   } catch {
-    return fallback;
+    return null;
   }
 }
 
-function writeJson<T>(key: string, value: T) {
+function writeJson(key: string, value: unknown) {
+  if (!isBrowser()) return;
   window.localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new Event('posterly:data-changed'));
 }
 
-function nowDate() {
-  return new Date().toISOString();
+function requestSync<T>(path: string, options: { method?: string; body?: unknown } = {}): T | null {
+  if (!isBrowser()) return null;
+  const xhr = new XMLHttpRequest();
+  const user = readJson<UserRecord>(USER_KEY);
+  xhr.open(options.method ?? 'GET', `/api/posterly/${path}`, false);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  if (user?.id) xhr.setRequestHeader('x-posterly-user-id', user.id);
+  try {
+    xhr.send(options.body ? JSON.stringify(options.body) : undefined);
+  } catch {
+    return null;
+  }
+
+  if (xhr.status < 200 || xhr.status >= 300) return null;
+  try {
+    return JSON.parse(xhr.responseText) as T;
+  } catch {
+    return null;
+  }
 }
 
-function makeId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+function normalizeUser(user: UserRecord | null | undefined): UserRecord | null {
+  if (!user?.id || !user.email) return null;
+  return {
+    id: user.id,
+    name: user.name || user.email.split('@')[0] || 'User',
+    email: user.email,
+    created_at: user.created_at ?? user.createdAt,
+  };
 }
 
-export function getUsers() {
-  return readJson<UserRecord[]>(USERS_KEY, []);
+function setSession(user: UserRecord, workspace?: WorkspaceRecord | null) {
+  writeJson(USER_KEY, normalizeUser(user));
+  if (workspace?.id) window.localStorage.setItem(WORKSPACE_KEY, workspace.id);
 }
 
-export function getWorkspaces() {
-  return readJson<WorkspaceRecord[]>(WORKSPACES_KEY, []);
+export function getCurrentUser(): UserRecord | null {
+  return normalizeUser(readJson<UserRecord>(USER_KEY));
 }
 
-export function getWorkspaceMembers() {
-  return readJson<WorkspaceMemberRecord[]>(MEMBERS_KEY, []);
+export function getUsers(): UserRecord[] {
+  const user = getCurrentUser();
+  return user ? [user] : [];
 }
 
-export function getInvitations() {
-  return readJson<InvitationRecord[]>(INVITATIONS_KEY, []);
+export function getWorkspaces(): WorkspaceRecord[] {
+  const user = getCurrentUser();
+  if (!user) return [];
+  return requestSync<WorkspaceRecord[]>(`workspaces?userId=${encodeURIComponent(user.id)}`) ?? [];
 }
 
-export function getCurrentUser() {
-  const userId = window.localStorage.getItem(SESSION_USER_ID_KEY);
-  return getUsers().find((user) => user.id === userId) ?? null;
+export function getWorkspaceMembers(): WorkspaceMemberRecord[] {
+  const membership = getCurrentMembership();
+  return membership ? [membership] : [];
 }
 
-export function getActiveWorkspaceId() {
-  return window.localStorage.getItem(ACTIVE_WORKSPACE_ID_KEY);
+export function getInvitations(): InvitationRecord[] {
+  return [];
+}
+
+export function getActiveWorkspaceId(): string | null {
+  if (!isBrowser()) return null;
+  const stored = window.localStorage.getItem(WORKSPACE_KEY);
+  const workspaces = getWorkspaces();
+  if (stored && workspaces.some((workspace) => workspace.id === stored)) return stored;
+  const firstWorkspace = workspaces[0];
+  if (!firstWorkspace) {
+    window.localStorage.removeItem(WORKSPACE_KEY);
+    return null;
+  }
+  window.localStorage.setItem(WORKSPACE_KEY, firstWorkspace.id);
+  return firstWorkspace.id;
 }
 
 export function setActiveWorkspaceId(workspaceId: string) {
-  window.localStorage.setItem(ACTIVE_WORKSPACE_ID_KEY, workspaceId);
-  window.localStorage.removeItem(ACTIVE_EVENT_ID_KEY);
-  window.dispatchEvent(new Event('posterly:data-changed'));
+  if (!isBrowser()) return;
+  window.localStorage.setItem(WORKSPACE_KEY, workspaceId);
 }
 
-export function getActiveWorkspace() {
+export function getActiveWorkspace(): WorkspaceRecord | null {
   const workspaceId = getActiveWorkspaceId();
+  if (!workspaceId) return null;
   return getWorkspaces().find((workspace) => workspace.id === workspaceId) ?? null;
 }
 
-export function getCurrentMembership() {
+export function getCurrentMembership(): WorkspaceMemberRecord | null {
   const user = getCurrentUser();
-  const workspaceId = getActiveWorkspaceId();
-  if (!user || !workspaceId) return null;
-
+  const workspace = getActiveWorkspace();
+  if (!user || !workspace) return null;
+  const session = requestSync<{
+    membership?: WorkspaceMemberRecord | null;
+  }>(`session?userId=${encodeURIComponent(user.id)}`);
   return (
-    getWorkspaceMembers().find(
-      (member) =>
-        member.userId === user.id &&
-        member.workspaceId === workspaceId &&
-        member.status === 'active',
-    ) ?? null
+    session?.membership ?? {
+      id: `${workspace.id}-${user.id}`,
+      workspace_id: workspace.id,
+      user_id: user.id,
+      role: workspace.owner_id === user.id || workspace.ownerId === user.id ? 'Owner' : 'Admin',
+      status: 'active',
+    }
   );
 }
 
@@ -136,169 +188,64 @@ export function canEditData() {
 }
 
 export function signUp(name: string, email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const users = getUsers();
-  if (users.some((user) => user.email === normalizedEmail)) {
-    throw new Error('An account with this email already exists.');
-  }
-
-  const user: UserRecord = {
-    id: makeId('user'),
-    name: name.trim(),
-    email: normalizedEmail,
-    password,
-    createdAt: nowDate(),
-  };
-  const workspace: WorkspaceRecord = {
-    id: makeId('workspace'),
-    name: `${user.name || user.email}'s Workspace`,
-    ownerId: user.id,
-    createdAt: nowDate(),
-  };
-  const member: WorkspaceMemberRecord = {
-    id: makeId('member'),
-    workspaceId: workspace.id,
-    userId: user.id,
-    role: 'Owner',
-    status: 'active',
-    createdAt: nowDate(),
-  };
-
-  writeJson(USERS_KEY, [...users, user]);
-  writeJson(WORKSPACES_KEY, [...getWorkspaces(), workspace]);
-  writeJson(MEMBERS_KEY, [...getWorkspaceMembers(), member]);
-  window.localStorage.setItem(SESSION_USER_ID_KEY, user.id);
-  setActiveWorkspaceId(workspace.id);
-  acceptPendingInvitationsForUser(user);
-
-  return user;
+  const result = requestSync<{ user: UserRecord; workspace: WorkspaceRecord }>('auth/signup', {
+    method: 'POST',
+    body: { name, email, password },
+  });
+  if (!result?.user) return null;
+  setSession(result.user, result.workspace);
+  return normalizeUser(result.user);
 }
 
-export function ensureAccountWithWorkspace(
-  name: string,
-  email: string,
-  password: string,
-) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const existingUser = getUsers().find((user) => user.email === normalizedEmail);
-
-  if (existingUser) {
-    window.localStorage.setItem(SESSION_USER_ID_KEY, existingUser.id);
-    acceptPendingInvitationsForUser(existingUser);
-
-    const membership =
-      getWorkspaceMembers().find(
-        (member) => member.userId === existingUser.id && member.status === 'active',
-      ) ??
-      getWorkspaceMembers().find((member) => member.userId === existingUser.id);
-
-    if (membership) setActiveWorkspaceId(membership.workspaceId);
-    return existingUser;
-  }
-
-  return signUp(name, normalizedEmail, password);
+export function ensureAccountWithWorkspace(name: string, email: string, password: string) {
+  const result = requestSync<{ user: UserRecord; workspace: WorkspaceRecord }>('auth/ensure-account', {
+    method: 'POST',
+    body: { name, email, password },
+  });
+  if (!result?.user) return null;
+  setSession(result.user, result.workspace);
+  return normalizeUser(result.user);
 }
 
 export function signIn(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = getUsers().find(
-    (item) => item.email === normalizedEmail && item.password === password,
-  );
-  if (!user) throw new Error('Invalid email or password.');
-
-  window.localStorage.setItem(SESSION_USER_ID_KEY, user.id);
-  acceptPendingInvitationsForUser(user);
-
-  const firstMembership = getWorkspaceMembers().find(
-    (member) => member.userId === user.id && member.status === 'active',
-  );
-  if (firstMembership) setActiveWorkspaceId(firstMembership.workspaceId);
-
-  return user;
+  const result = requestSync<{ user: UserRecord; workspace: WorkspaceRecord }>('auth/signin', {
+    method: 'POST',
+    body: { email, password },
+  });
+  if (!result?.user) return null;
+  setSession(result.user, result.workspace);
+  return normalizeUser(result.user);
 }
 
 export function signOut() {
-  window.localStorage.removeItem(SESSION_USER_ID_KEY);
-  window.localStorage.removeItem(ACTIVE_WORKSPACE_ID_KEY);
-  window.localStorage.removeItem(ACTIVE_EVENT_ID_KEY);
-  window.dispatchEvent(new Event('posterly:data-changed'));
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(USER_KEY);
+  window.localStorage.removeItem(WORKSPACE_KEY);
+  window.localStorage.removeItem(EVENT_KEY);
 }
 
-export function inviteWorkspaceUser(
-  invitedEmail: string,
-  role: Exclude<UserRole, 'Owner'>,
-) {
-  const user = getCurrentUser();
+export function inviteWorkspaceUser(email: string, role: 'Admin' | 'Editor' | 'Viewer') {
   const workspaceId = getActiveWorkspaceId();
-  if (!user || !workspaceId || !canManageUsers()) {
-    throw new Error('You do not have permission to invite users.');
-  }
-
-  const invitation: InvitationRecord = {
-    id: makeId('invite'),
-    workspaceId,
-    invitedEmail: invitedEmail.trim().toLowerCase(),
-    invitedBy: user.id,
+  const user = getCurrentUser();
+  if (!workspaceId || !user) return null;
+  return {
+    id: `${workspaceId}-${email}`,
+    workspace_id: workspaceId,
+    invited_email: email,
+    invited_by: user.id,
     role,
     status: 'pending',
-    token: makeId('token'),
-    createdAt: nowDate(),
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-  };
-
-  writeJson(INVITATIONS_KEY, [...getInvitations(), invitation]);
-
-  const invitedUser = getUsers().find((item) => item.email === invitation.invitedEmail);
-  if (invitedUser) acceptPendingInvitationsForUser(invitedUser);
-
-  return invitation;
+    token: `${workspaceId}-${Date.now()}`,
+    created_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  } satisfies InvitationRecord;
 }
 
-export function acceptPendingInvitationsForUser(user: UserRecord) {
-  const invitations = getInvitations();
-  const members = getWorkspaceMembers();
-  let changed = false;
-
-  const nextInvitations = invitations.map((invitation) => {
-    if (
-      invitation.invitedEmail !== user.email ||
-      invitation.status !== 'pending'
-    ) {
-      return invitation;
-    }
-
-    const alreadyMember = members.some(
-      (member) =>
-        member.userId === user.id && member.workspaceId === invitation.workspaceId,
-    );
-    if (!alreadyMember) {
-      members.push({
-        id: makeId('member'),
-        workspaceId: invitation.workspaceId,
-        userId: user.id,
-        role: invitation.role,
-        status: 'active',
-        createdAt: nowDate(),
-      });
-    }
-    changed = true;
-    return { ...invitation, status: 'accepted' as const };
-  });
-
-  if (changed) {
-    writeJson(MEMBERS_KEY, members);
-    writeJson(INVITATIONS_KEY, nextInvitations);
-  }
+export function acceptPendingInvitationsForUser() {
+  return [];
 }
 
 export function getWorkspaceUsers() {
-  const workspaceId = getActiveWorkspaceId();
-  if (!workspaceId) return [];
-  const users = getUsers();
-  return getWorkspaceMembers()
-    .filter((member) => member.workspaceId === workspaceId)
-    .map((member) => ({
-      ...member,
-      user: users.find((user) => user.id === member.userId) ?? null,
-    }));
+  const user = getCurrentUser();
+  return user ? [{ user, membership: getCurrentMembership() }] : [];
 }
