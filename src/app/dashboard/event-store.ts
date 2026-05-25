@@ -11,6 +11,8 @@ export type EventRecord = {
   date: string;
   location: string;
   logo?: string | null;
+  logoUrl?: string | null;
+  logoName?: string;
   created?: string;
   created_by?: string;
   createdBy?: string;
@@ -81,6 +83,8 @@ function normalizeEvent(event: EventRecord): EventRecord {
   return {
     ...event,
     workspaceId: event.workspaceId ?? event.workspace_id,
+    logoUrl: event.logoUrl ?? event.logo ?? null,
+    logoName: event.logoName ?? (event.logo || event.logoUrl ? 'Event logo selected.' : 'No logo selected.'),
     created: event.created ?? makeCreatedDate(event.created_at || event.createdAt ? new Date(event.created_at ?? event.createdAt ?? '') : new Date()),
     createdAt: event.createdAt ?? event.created_at,
     updatedAt: event.updatedAt ?? event.updated_at,
