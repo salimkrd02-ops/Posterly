@@ -11,6 +11,7 @@ export type EventRecord = {
   date: string;
   location: string;
   logo?: string | null;
+  created?: string;
   created_by?: string;
   createdBy?: string;
   created_at?: string;
@@ -26,6 +27,7 @@ export type TeamRecord = {
   event_id?: string;
   eventId?: string;
   name: string;
+  created?: string;
   created_at?: string;
   createdAt?: string;
   updated_at?: string;
@@ -39,6 +41,7 @@ export type CategoryRecord = {
   event_id?: string;
   eventId?: string;
   name: string;
+  created?: string;
   created_at?: string;
   createdAt?: string;
   updated_at?: string;
@@ -78,6 +81,7 @@ function normalizeEvent(event: EventRecord): EventRecord {
   return {
     ...event,
     workspaceId: event.workspaceId ?? event.workspace_id,
+    created: event.created ?? makeCreatedDate(event.created_at || event.createdAt ? new Date(event.created_at ?? event.createdAt ?? '') : new Date()),
     createdAt: event.createdAt ?? event.created_at,
     updatedAt: event.updatedAt ?? event.updated_at,
     createdBy: event.createdBy ?? event.created_by,
@@ -89,6 +93,7 @@ function normalizeTeam(team: TeamRecord): TeamRecord {
     ...team,
     workspaceId: team.workspaceId ?? team.workspace_id,
     eventId: team.eventId ?? team.event_id,
+    created: team.created ?? makeCreatedDate(team.created_at || team.createdAt ? new Date(team.created_at ?? team.createdAt ?? '') : new Date()),
     createdAt: team.createdAt ?? team.created_at,
     updatedAt: team.updatedAt ?? team.updated_at,
   };
@@ -99,6 +104,7 @@ function normalizeCategory(category: CategoryRecord): CategoryRecord {
     ...category,
     workspaceId: category.workspaceId ?? category.workspace_id,
     eventId: category.eventId ?? category.event_id,
+    created: category.created ?? makeCreatedDate(category.created_at || category.createdAt ? new Date(category.created_at ?? category.createdAt ?? '') : new Date()),
     createdAt: category.createdAt ?? category.created_at,
     updatedAt: category.updatedAt ?? category.updated_at,
   };
